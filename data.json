@@ -5,37 +5,26 @@
       "username": "admin",
       "name": "مدیر",
       "family": "سیستم",
-      "role": "مدیر",
+      "role": "admin",
       "password": "admin",
       "sex": "1",
       "chartInfo": "مدیرکل",
       "possition": "مدیر",
-      "nationalCodeEncrypted": "U2FsdGVkX19T5S3+VMhJdV0NK8QhHaC5B88xfcjmEBs="
+      "nationalCode": "1234567890"
     },
     {
       "id": "500",
       "username": "manage",
       "name": "پیمانکار",
       "family": "نمونه",
-      "role": "پیمانکار",
+      "role": "contractor",
       "password": "1234",
       "sex": "1",
       "chartInfo": "پیمانکار",
       "possition": "پیمانکار",
-      "nationalCodeEncrypted": "U2FsdGVkX1/PnBIx7WD73ggXl/Wk3bD1cF7larEiU+A="
+      "nationalCode": "9876543210"
     }
   ],
   "requests": [],
-  "activityLog": [
-    {
-      "userId": "999",
-      "userName": "مدیر سیستم",
-      "role": "مدیر",
-      "action": "ورود به سیستم",
-      "details": "نقش: مدیر",
-      "timestamp": "2026-08-05T15:30:24.094Z",
-      "date": "۱۴۰۵-۰۵-۱۴",
-      "time": "19:00"
-    }
-  ]
+  "activityLog": []
 }
