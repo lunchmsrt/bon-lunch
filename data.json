@@ -10,7 +10,7 @@
       "sex": "1",
       "chartInfo": "مدیرکل",
       "possition": "مدیر",
-      "nationalCodeEncrypted": "U2FsdGVkX19Ly5hDPeVivCisM5BqRyCziC0XVng5ATE="
+      "nationalCodeEncrypted": "U2FsdGVkX18eaVkzAQwc+vaD36XxNq09Dy5PEz21QmQ="
     },
     {
       "id": "500",
@@ -22,9 +22,20 @@
       "sex": "1",
       "chartInfo": "پیمانکار",
       "possition": "پیمانکار",
-      "nationalCodeEncrypted": "U2FsdGVkX19WSzaArPr51DnHdlX2SzAruk6MMVNR7X0="
+      "nationalCodeEncrypted": "U2FsdGVkX1/UPm7WY7XytuFuG9WrdPzdeHt7nMAVQdU="
     }
   ],
   "requests": [],
-  "activityLog": []
+  "activityLog": [
+    {
+      "userId": "999",
+      "userName": "مدیر سیستم",
+      "role": "مدیر",
+      "action": "ورود به سیستم",
+      "details": "نقش: مدیر",
+      "timestamp": "2026-08-05T15:30:24.094Z",
+      "date": "۱۴۰۵-۰۵-۱۴",
+      "time": "19:00"
+    }
+  ]
 }
