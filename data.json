@@ -1,0 +1,30 @@
+{
+  "users": [
+    {
+      "id": "999",
+      "username": "admin",
+      "name": "مدیر",
+      "family": "سیستم",
+      "role": "مدیر",
+      "password": "admin",
+      "sex": "1",
+      "chartInfo": "مدیرکل",
+      "possition": "مدیر",
+      "nationalCodeEncrypted": "U2FsdGVkX1+bG02ixUGuYa8Cef8PKO9sYKQOjQ523PE="
+    },
+    {
+      "id": "500",
+      "username": "manage",
+      "name": "پیمانکار",
+      "family": "نمونه",
+      "role": "پیمانکار",
+      "password": "1234",
+      "sex": "1",
+      "chartInfo": "پیمانکار",
+      "possition": "پیمانکار",
+      "nationalCodeEncrypted": "U2FsdGVkX1+WUhg6QfN/VWMOMNZw+NXkVz6GvhPNpeE="
+    }
+  ],
+  "requests": [],
+  "activityLog": []
+}
