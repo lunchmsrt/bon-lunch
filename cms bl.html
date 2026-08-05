@@ -1,0 +1,1821 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستم ثبت ناهار - وزارت عتف</title>
+    
+    <!-- ===== بارگذاری فایل‌های استاتیک از files.ir ===== -->
+    <!-- فونت B Titr -->
+    <link href="https://files.ir/bon%20lunch/b-titr-font.css" rel="stylesheet">
+    
+    <!-- کتابخانه‌های JS -->
+    <script src="https://files.ir/bon%20lunch/xlsx.full.min.js"></script>
+    <script src="https://files.ir/bon%20lunch/html2canvas.min.js"></script>
+    <script src="https://files.ir/bon%20lunch/jspdf.umd.min.js"></script>
+    
+    <style>
+        /* ===== استایل‌های اصلی ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'BTitr', 'B Titr', Tahoma, sans-serif !important;
+        }
+        body {
+            background: #f0f4f8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            position: relative;
+            min-height: 600px;
+        }
+        /* ===== بقیه استایل‌ها ===== */
+        .hidden { display: none !important; }
+        .text-center { text-align: center; }
+        .flex { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+        button {
+            cursor: pointer;
+            padding: 10px 22px;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+        .btn-primary { background: #3b82f6; color: #fff; }
+        .btn-success { background: #22c55e; color: #fff; }
+        .btn-danger { background: #ef4444; color: #fff; }
+        .btn-warning { background: #f59e0b; color: #fff; }
+        .btn-secondary { background: #94a3b8; color: #fff; }
+        .btn-sm { padding: 6px 14px; font-size: 13px; }
+        .btn-lg { padding: 14px 40px; font-size: 18px; }
+        
+        .home-buttons {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 35px 0 20px;
+        }
+        .home-buttons button {
+            min-width: 200px;
+            padding: 24px 30px;
+            font-size: 18px;
+            border-radius: 16px;
+            flex-direction: column;
+        }
+        .home-buttons button small {
+            font-weight: 400;
+            font-size: 13px;
+            opacity: 0.85;
+        }
+        .card {
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            border-right: 4px solid #3b82f6;
+        }
+        .card-success { border-right-color: #22c55e; }
+        .card-danger { border-right-color: #ef4444; }
+        .table-wrap {
+            overflow-x: auto;
+            margin: 12px 0;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px 14px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background: #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+        }
+        tr:hover td { background: #f8fafc; }
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+            pointer-events: none;
+            width: 100%;
+            max-width: 500px;
+            padding: 0 20px;
+        }
+        .toast {
+            pointer-events: auto;
+            padding: 14px 24px;
+            border-radius: 14px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 15px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            animation: slideDown 0.4s ease;
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(6px);
+        }
+        .toast-success { background: rgba(34,197,94,0.92); }
+        .toast-error { background: rgba(239,68,68,0.92); }
+        .toast-warning { background: rgba(245,158,11,0.92); }
+        .toast-info { background: rgba(59,130,246,0.92); }
+        @keyframes slideDown {
+            from { opacity:0; transform:translateY(-30px) scale(0.95); }
+            to { opacity:1; transform:translateY(0) scale(1); }
+        }
+        @media (max-width: 768px) {
+            .container { padding: 16px; }
+            .home-buttons button { min-width: 140px; padding: 18px 20px; font-size: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container" id="app">
+        <!-- ===== صفحه اصلی ===== -->
+        <div id="homePage">
+            <h1>🍱 سامانه ثبت درخواست ناهار</h1>
+            <p class="text-center" style="color:#64748b; margin-bottom:6px;">وزارت علوم، تحقیقات و فناوری</p>
+            <div class="home-buttons">
+                <button id="goManagerBtn" class="btn-primary btn-lg">🏛️ مدیر سیستم <small>وزارت عتف</small></button>
+                <button id="goContractorBtn" class="btn-warning btn-lg">👷 پیمانکار <small>ویرایش درخواست‌ها</small></button>
+                <button id="goEmployeeBtn" class="btn-success btn-lg">👤 کارمند <small>ثبت درخواست</small></button>
+            </div>
+            <div style="text-align:center; padding:10px; background:rgba(59,130,246,0.05); border-radius:12px; margin-top:10px;">
+                <span style="font-size:14px; color:#64748b;">📅 تاریخ امروز: </span>
+                <span id="homeDate" style="font-weight:bold; color:#1e293b;"></span>
+                <span style="font-size:14px; color:#64748b; margin-right:15px;">🕐 </span>
+                <span id="homeTime" style="font-weight:bold; color:#1e293b;"></span>
+            </div>
+            <div style="text-align:center; margin-top:10px; font-size:12px; color:#94a3b8;">
+                🔗 داده‌ها روی <strong>JSONBin</strong> ذخیره می‌شوند
+            </div>
+        </div>
+
+        <!-- ===== LOGIN ===== -->
+        <div id="loginPage" class="hidden">
+            <h2 id="loginTitle">ورود</h2>
+            <button class="btn-secondary back-home" onclick="goHome()">🏠 بازگشت به صفحه اصلی</button>
+            <div class="form-group"><label>نام کاربری</label><input type="text" id="loginUser" placeholder="نام کاربری"></div>
+            <div class="form-group"><label>رمز عبور</label><input type="password" id="loginPass" placeholder="رمز عبور"></div>
+            <button id="loginBtn" class="btn-primary" style="width:100%; padding:14px; font-size:16px;">ورود</button>
+            <div id="loginMessage" class="hidden" style="margin-top:12px; padding:10px; border-radius:8px; font-weight:600;"></div>
+        </div>
+
+        <!-- ===== EMPLOYEE PAGE ===== -->
+        <div id="employeePage" class="hidden">
+            <h2>👤 ورود کارمند</h2>
+            <button class="btn-secondary back-home" onclick="goHome()">🏠 بازگشت به صفحه اصلی</button>
+            <div class="card card-success emp-input-area" style="max-width:500px; margin:20px auto;">
+                <p style="margin-bottom:10px;">۴ رقم آخر کد ملی خود را وارد کنید:</p>
+                <input type="text" id="empCodeInput" placeholder="مثلاً 6970" maxlength="4" inputmode="numeric" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ccc; font-size:24px; text-align:center;">
+                <div style="display:flex; justify-content:center; margin-top:16px;">
+                    <button id="empConfirmBtn" class="btn-success" style="width:100%;">✅ تأیید و ثبت</button>
+                </div>
+            </div>
+            <div id="empMessage" class="hidden" style="padding:12px; border-radius:10px; font-weight:600; margin:10px 0;"></div>
+            <div id="empInfoPanel" class="hidden card">
+                <div id="empInfoContent"></div>
+                <div style="margin-top:14px;">
+                    <button id="empProfileBtn" class="btn-primary">👤 ورود به پروفایل</button>
+                </div>
+                <div id="empLastRequest" style="margin-top:8px; font-size:14px; color:#64748b;"></div>
+            </div>
+        </div>
+
+        <!-- ===== EMPLOYEE PROFILE ===== -->
+        <div id="employeeProfilePage" class="hidden">
+            <h2>👤 پروفایل کارمند</h2>
+            <button class="btn-secondary back-home" onclick="goEmployeePage()">🏠 بازگشت به صفحه کارمند</button>
+            <div id="empProfileContent"></div>
+        </div>
+
+        <!-- ===== MAIN PAGE (Manager / Contractor) ===== -->
+        <div id="mainPage" class="hidden">
+            <div class="header" style="background:#f1f5f9; padding:14px 22px; border-radius:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+                <div class="user-info" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+                    <span><strong id="displayName">---</strong></span>
+                    <span class="role-badge" style="background:#3b82f6; color:#fff; padding:4px 16px; border-radius:30px; font-size:13px;" id="displayRole">---</span>
+                    <span class="badge" style="background:#1e293b; color:#fff; padding:4px 16px; border-radius:30px; font-size:13px;">کد: <span id="displayId">---</span></span>
+                </div>
+                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                    <span style="font-size:14px; color:#475569; background:rgba(255,255,255,0.7); padding:6px 16px; border-radius:30px;">
+                        <span>📅</span> <span id="headerDate"></span>
+                        <span>🕐</span> <span id="headerTime"></span>
+                    </span>
+                    <span id="baleBtnContainer" style="display:none;">
+                        <a href="https://web.bale.ai/chat?uid=192202299" target="_blank" class="btn-bale" style="background:#22a7f0; color:#fff; padding:8px 18px; border-radius:10px; text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-size:14px;">
+                            📤 ارسال فایل به مدیر
+                        </a>
+                    </span>
+                    <button class="btn-secondary" onclick="goHome()" style="margin-left:8px;">🏠 خانه</button>
+                    <button id="logoutBtn" class="btn-danger">خروج</button>
+                </div>
+            </div>
+            <div id="mainMessage" class="hidden" style="padding:12px; border-radius:10px; font-weight:600; margin:10px 0;"></div>
+            <div class="tabs" id="tabsContainer" style="display:flex; gap:4px; border-bottom:2px solid #e2e8f0; margin-bottom:24px; flex-wrap:wrap;"></div>
+            <div id="tabContentContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        // ================================================================
+        //  تنظیمات JSONBin
+        // ================================================================
+        // 🔑 برای استفاده، ابتدا در https://jsonbin.io ثبت‌نام کنید
+        // و یک Bin جدید با محتوای {"users":[],"requests":[],"activityLog":[]} ایجاد کنید
+        // سپس آدرس Bin و کلید API را در متغیرهای زیر قرار دهید
+        
+        const JSONBIN_BIN_ID = 'YOUR_BIN_ID';        // ← شناسه Bin خود را وارد کنید
+        const JSONBIN_API_KEY = 'YOUR_API_KEY';      // ← کلید API خود را وارد کنید
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+        const JSONBIN_RECORD_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}/latest`;
+
+        // ================================================================
+        //  توابع دیتابیس ابری (JSONBin)
+        // ================================================================
+
+        let currentDB = { users: [], requests: [], activityLog: [] };
+        let dbLoaded = false;
+        let pendingRequests = 0;
+
+        async function loadDataFromCloud() {
+            try {
+                const response = await fetch(JSONBIN_RECORD_URL, {
+                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const result = await response.json();
+                if (result.record) {
+                    currentDB = result.record;
+                    if (!currentDB.users) currentDB.users = [];
+                    if (!currentDB.requests) currentDB.requests = [];
+                    if (!currentDB.activityLog) currentDB.activityLog = [];
+                    dbLoaded = true;
+                    console.log('✅ داده از JSONBin بارگذاری شد.');
+                    return true;
+                }
+                return false;
+            } catch (err) {
+                console.error('❌ خطا در بارگذاری داده از JSONBin:', err);
+                // اگر خطا بود، دیتای پیش‌فرض
+                currentDB = { users: [], requests: [], activityLog: [] };
+                // اضافه کردن کاربران پیش‌فرض
+                if (currentDB.users.length === 0) {
+                    currentDB.users.push({
+                        id: '999',
+                        username: 'admin',
+                        name: 'مدیر',
+                        family: 'سیستم',
+                        role: 'مدیر',
+                        password: 'admin',
+                        sex: '1',
+                        chartInfo: 'مدیرکل',
+                        possition: 'مدیر',
+                        nationalCode: '1234567890'
+                    });
+                    currentDB.users.push({
+                        id: '500',
+                        username: 'manage',
+                        name: 'پیمانکار',
+                        family: 'نمونه',
+                        role: 'پیمانکار',
+                        password: '1234',
+                        sex: '1',
+                        chartInfo: 'پیمانکار',
+                        possition: 'پیمانکار',
+                        nationalCode: '9876543210'
+                    });
+                }
+                dbLoaded = true;
+                return false;
+            }
+        }
+
+        async function saveDataToCloud() {
+            if (pendingRequests > 0) {
+                pendingRequests++;
+                return;
+            }
+            pendingRequests = 1;
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(currentDB)
+                });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                console.log('✅ داده با موفقیت ذخیره شد.');
+                pendingRequests = 0;
+                return true;
+            } catch (err) {
+                console.error('❌ خطا در ذخیره داده:', err);
+                pendingRequests = 0;
+                return false;
+            }
+        }
+
+        // ================================================================
+        //  توابع کمکی (قبلی)
+        // ================================================================
+
+        let currentUser = null;
+        let todayReportInterval = null;
+        let clockInterval = null;
+
+        function getTodayShamsi() {
+            const now = new Date();
+            const f = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const parts = f.format(now).split('/');
+            return `${parts[0]}-${parts[1]}-${parts[2]}`;
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            return String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+        }
+
+        function getFullShamsi() {
+            const now = new Date();
+            return new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }).format(now);
+        }
+
+        function findUserById(id) {
+            return currentDB.users.find(u => String(u.id) === String(id));
+        }
+
+        function findUserByUsername(username) {
+            return currentDB.users.find(u => u.username === username);
+        }
+
+        function findUserByNationalCodeSuffix(suffix) {
+            return currentDB.users.find(u => String(u.nationalCode || '').endsWith(suffix));
+        }
+
+        function findUsersByNationalCodeSuffix(suffix) {
+            return currentDB.users.filter(u => String(u.nationalCode || '').endsWith(suffix));
+        }
+
+        function hasRequestToday(userId) {
+            const today = getTodayShamsi();
+            return currentDB.requests.some(r => r.userId === String(userId) && r.date === today);
+        }
+
+        function getRequestsByUser(userId) {
+            return currentDB.requests.filter(r => r.userId === String(userId));
+        }
+
+        function getRequestsByDate(date) {
+            return currentDB.requests.filter(r => r.date === date);
+        }
+
+        function getAllRequests() {
+            return currentDB.requests;
+        }
+
+        function getUserRequestCount(userId) {
+            return currentDB.requests.filter(r => r.userId === String(userId)).length;
+        }
+
+        function addActivityLog(userId, action, details = '') {
+            const user = findUserById(userId);
+            const entry = {
+                userId: String(userId),
+                userName: user ? (user.name + ' ' + user.family).trim() || user.username : 'نامشخص',
+                role: user ? user.role : 'نامشخص',
+                action: action,
+                details: details,
+                timestamp: new Date().toISOString(),
+                date: getTodayShamsi(),
+                time: getCurrentTime()
+            };
+            currentDB.activityLog.push(entry);
+            saveDataToCloud();
+        }
+
+        function showToast(message, type = 'info', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.remove();
+            }, duration);
+        }
+
+        // ================================================================
+        //  توابع مدیریت کاربران (با ذخیره ابری)
+        // ================================================================
+
+        function addUserWithId(userData) {
+            if (findUserById(userData.id)) return { success: false, message: `ID ${userData.id} تکراری است.` };
+            if (userData.username && findUserByUsername(userData.username)) return { success: false, message: `نام کاربری ${userData.username} تکراری است.` };
+            const newUser = {
+                id: String(userData.id),
+                username: userData.username || '',
+                name: userData.name || '',
+                family: userData.family || '',
+                role: userData.role || 'کارمند',
+                password: userData.password || (userData.username || ''),
+                sex: userData.sex || '',
+                nationalCode: userData.nationalCode || '',
+                chartInfo: userData.chartInfo || '',
+                possition: userData.possition || ''
+            };
+            currentDB.users.push(newUser);
+            saveDataToCloud();
+            addActivityLog(newUser.id, 'ایجاد کاربر', `نقش: ${newUser.role}`);
+            return { success: true, message: 'کاربر اضافه شد.', user: newUser };
+        }
+
+        function updateUser(userId, updates) {
+            const idx = currentDB.users.findIndex(u => String(u.id) === String(userId));
+            if (idx === -1) return { success: false, message: 'کاربر یافت نشد.' };
+            currentDB.users[idx] = { ...currentDB.users[idx], ...updates };
+            saveDataToCloud();
+            addActivityLog(userId, 'ویرایش کاربر', `تغییرات: ${JSON.stringify(updates)}`);
+            return { success: true, message: 'به‌روزرسانی انجام شد.' };
+        }
+
+        function deleteUser(userId) {
+            if (currentUser && String(currentUser.id) === String(userId)) return { success: false, message: 'نمی‌توانید خودتان را حذف کنید.' };
+            const idx = currentDB.users.findIndex(u => String(u.id) === String(userId));
+            if (idx === -1) return { success: false, message: 'کاربر یافت نشد.' };
+            const user = currentDB.users[idx];
+            currentDB.requests = currentDB.requests.filter(r => r.userId !== String(userId));
+            currentDB.users.splice(idx, 1);
+            saveDataToCloud();
+            addActivityLog(userId, 'حذف کاربر', `نقش: ${user.role}`);
+            return { success: true, message: 'کاربر حذف شد.' };
+        }
+
+        function deleteAllEmployees() {
+            const toDelete = currentDB.users.filter(u => u.role === 'کارمند');
+            if (toDelete.length === 0) return { success: false, message: 'هیچ کارمندی برای حذف وجود ندارد.' };
+            const ids = toDelete.map(u => u.id);
+            let deleted = 0;
+            ids.forEach(id => {
+                const res = deleteUser(id);
+                if (res.success) deleted++;
+            });
+            return { success: true, deleted, message: `${deleted} کارمند حذف شدند.` };
+        }
+
+        // ================================================================
+        //  توابع درخواست
+        // ================================================================
+
+        function addRequest(userId) {
+            if (hasRequestToday(userId)) return { success: false, message: 'امروز قبلاً ثبت کرده‌اید.' };
+            const entry = { userId: String(userId), date: getTodayShamsi(), time: getCurrentTime(), status: 'ثبت شده' };
+            currentDB.requests.push(entry);
+            saveDataToCloud();
+            addActivityLog(userId, 'ثبت درخواست', `تاریخ: ${entry.date} ساعت: ${entry.time}`);
+            const user = findUserById(userId);
+            const fullName = user ? (user.name + ' ' + user.family).trim() || user.username : 'کارمند';
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('🍱 درخواست ناهار جدید', {
+                    body: `${fullName} درخواست ناهار خود را ثبت کرد.`,
+                    icon: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Ctext y=".9em" font-size="90" %3E🍱%3C/text%3E%3C/svg%3E'
+                });
+            }
+            return { success: true, message: 'درخواست ناهار ثبت شد.' };
+        }
+
+        function updateRequest(userId, date, newTime) {
+            const req = currentDB.requests.find(r => r.userId === String(userId) && r.date === date);
+            if (!req) return { success: false, message: 'درخواست یافت نشد.' };
+            req.time = newTime;
+            saveDataToCloud();
+            addActivityLog(userId, 'ویرایش درخواست', `تاریخ: ${date} ساعت جدید: ${newTime}`);
+            return { success: true, message: 'زمان به‌روز شد.' };
+        }
+
+        function updateRequestUserId(oldUserId, newUserId, date) {
+            const req = currentDB.requests.find(r => r.userId === String(oldUserId) && r.date === date);
+            if (!req) return { success: false, message: 'درخواست یافت نشد.' };
+            if (!findUserById(newUserId)) return { success: false, message: 'کاربر با ID جدید وجود ندارد.' };
+            const existing = currentDB.requests.find(r => r.userId === String(newUserId) && r.date === date);
+            if (existing) return { success: false, message: 'کاربر جدید قبلاً در این تاریخ درخواست ثبت کرده است.' };
+            req.userId = String(newUserId);
+            saveDataToCloud();
+            addActivityLog(newUserId, 'ویرایش ID درخواست', `از ${oldUserId} به ${newUserId} در تاریخ ${date}`);
+            return { success: true, message: `ID درخواست از ${oldUserId} به ${newUserId} تغییر یافت.` };
+        }
+
+        function deleteRequest(userId, date) {
+            const idx = currentDB.requests.findIndex(r => r.userId === String(userId) && r.date === date);
+            if (idx === -1) return { success: false, message: 'درخواست یافت نشد.' };
+            const req = currentDB.requests[idx];
+            currentDB.requests.splice(idx, 1);
+            saveDataToCloud();
+            addActivityLog(userId, 'حذف درخواست', `تاریخ: ${req.date} ساعت: ${req.time}`);
+            return { success: true, message: 'درخواست حذف شد.' };
+        }
+
+        function deleteRequestBySuffix(suffix, date) {
+            const users = findUsersByNationalCodeSuffix(suffix);
+            if (users.length === 0) return { success: false, message: 'کاربری با این کد ملی یافت نشد.' };
+            if (users.length > 1) return { success: false, message: 'چندین کاربر با این کد ملی یافت شد. لطفاً با مدیر تماس بگیرید.' };
+            const user = users[0];
+            const idx = currentDB.requests.findIndex(r => r.userId === String(user.id) && r.date === date);
+            if (idx === -1) return { success: false, message: 'درخواستی برای این کاربر در تاریخ مورد نظر یافت نشد.' };
+            currentDB.requests.splice(idx, 1);
+            saveDataToCloud();
+            addActivityLog(user.id, 'حذف درخواست', `تاریخ: ${date}`);
+            return { success: true, message: 'درخواست حذف شد.' };
+        }
+
+        function updateRequestBySuffix(suffix, date, newTime) {
+            const users = findUsersByNationalCodeSuffix(suffix);
+            if (users.length === 0) return { success: false, message: 'کاربری با این کد ملی یافت نشد.' };
+            if (users.length > 1) return { success: false, message: 'چندین کاربر با این کد ملی یافت شد. لطفاً با مدیر تماس بگیرید.' };
+            const user = users[0];
+            const req = currentDB.requests.find(r => r.userId === String(user.id) && r.date === date);
+            if (!req) return { success: false, message: 'درخواستی برای این کاربر در تاریخ مورد نظر یافت نشد.' };
+            req.time = newTime;
+            saveDataToCloud();
+            addActivityLog(user.id, 'ویرایش درخواست', `تاریخ: ${date} ساعت جدید: ${newTime}`);
+            return { success: true, message: `زمان درخواست ${user.name} ${user.family} به ${newTime} تغییر یافت.` };
+        }
+
+        // ================================================================
+        //  توابع گزارش‌گیری
+        // ================================================================
+
+        function getDailyReport(date) {
+            const reqs = getRequestsByDate(date);
+            return reqs.map(r => {
+                const u = findUserById(r.userId);
+                return {
+                    ...r,
+                    userName: u ? (u.name + ' ' + u.family).trim() || u.username : 'نامشخص',
+                    chartInfo: u ? u.chartInfo || '' : '',
+                    nationalCode: u ? u.nationalCode || '' : '',
+                    requestCount: u ? getUserRequestCount(u.id) : 0
+                };
+            });
+        }
+
+        function getAllReport() {
+            return currentDB.requests.map(r => {
+                const u = findUserById(r.userId);
+                return {
+                    id: r.userId,
+                    name: u ? u.name || '' : '',
+                    family: u ? u.family || '' : '',
+                    chartInfo: u ? u.chartInfo || '' : '',
+                    nationalCode: u ? u.nationalCode || '' : '',
+                    date: r.date,
+                    time: r.time,
+                    requestCount: u ? getUserRequestCount(u.id) : 0
+                };
+            });
+        }
+
+        // ================================================================
+        //  خروجی‌ها
+        // ================================================================
+
+        function exportToExcel(data, title, columns) {
+            if (!data || !data.length) { showToast('داده‌ای برای خروجی وجود ندارد.', 'warning'); return; }
+            const wsData = [columns.map(c => c.label)];
+            data.forEach(row => wsData.push(columns.map(c => row[c.key] || '')));
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'گزارش');
+            XLSX.writeFile(wb, `${title}.xlsx`);
+            showToast('فایل اکسل با موفقیت دانلود شد.', 'success');
+        }
+
+        function exportToJPG(elementId, title) {
+            const element = document.getElementById(elementId);
+            if (!element) { showToast('عنصر مورد نظر یافت نشد.', 'error'); return; }
+            html2canvas(element, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `${title}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg', 0.95);
+                link.click();
+                showToast('فایل تصویر با موفقیت دانلود شد.', 'success');
+            }).catch(err => {
+                showToast('خطا در تولید تصویر: ' + err.message, 'error');
+            });
+        }
+
+        // ================================================================
+        //  توابع صفحه‌بندی
+        // ================================================================
+
+        function goHome() {
+            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('homePage').classList.remove('hidden');
+            currentUser = null;
+            if (todayReportInterval) clearInterval(todayReportInterval);
+            if (clockInterval) clearInterval(clockInterval);
+            updateHomeDateTime();
+        }
+
+        function updateHomeDateTime() {
+            const dateEl = document.getElementById('homeDate');
+            const timeEl = document.getElementById('homeTime');
+            if (dateEl) dateEl.textContent = getFullShamsi();
+            if (timeEl) timeEl.textContent = getCurrentTime();
+        }
+
+        function updateHeaderDateTime() {
+            const dateEl = document.getElementById('headerDate');
+            const timeEl = document.getElementById('headerTime');
+            if (dateEl) dateEl.textContent = getFullShamsi();
+            if (timeEl) timeEl.textContent = getCurrentTime();
+        }
+
+        function showLoginPage(role) {
+            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('loginPage').classList.remove('hidden');
+            document.getElementById('loginTitle').textContent = role === 'مدیر' ? '🏛️ ورود مدیر سیستم' : '👷 ورود پیمانکار';
+            document.getElementById('loginPage').dataset.role = role;
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('loginMessage').className = '';
+            document.getElementById('loginMessage').style.display = 'none';
+        }
+
+        function showEmployeePage() {
+            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('employeePage').classList.remove('hidden');
+            document.getElementById('employeeProfilePage').classList.add('hidden');
+            document.getElementById('empCodeInput').value = '';
+            document.getElementById('empMessage').className = '';
+            document.getElementById('empMessage').style.display = 'none';
+            document.getElementById('empInfoPanel').classList.add('hidden');
+        }
+
+        function goEmployeePage() {
+            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('employeePage').classList.remove('hidden');
+            document.getElementById('employeeProfilePage').classList.add('hidden');
+        }
+
+        function showEmployeeProfile(user) {
+            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('employeeProfilePage').classList.remove('hidden');
+            const container = document.getElementById('empProfileContent');
+            const genderTitle = user.sex === '0' ? 'خانم' : 'آقای';
+            const fullName = (user.name + ' ' + user.family).trim() || user.username;
+            const displayName = genderTitle ? `${genderTitle} ${fullName}` : fullName;
+            const requests = getRequestsByUser(user.id);
+            let html = `
+                <div class="card">
+                    <div class="flex"><strong>نام:</strong> ${displayName}</div>
+                    <div class="flex"><strong>نام کاربری:</strong> ${user.username || '---'}</div>
+                    <div class="flex"><strong>نقش:</strong> ${user.role}</div>
+                    <div class="flex"><strong>موقعیت:</strong> ${user.chartInfo || user.possition || '---'}</div>
+                    <div class="flex"><strong>۴ رقم کد ملی:</strong> ${String(user.nationalCode || '').slice(-4)}</div>
+                    <div class="flex"><strong>تعداد کل درخواست‌ها:</strong> ${getUserRequestCount(user.id)}</div>
+                </div>
+                <h3>📋 تاریخچه درخواست‌ها</h3>
+            `;
+            if (requests.length === 0) html += `<p>هیچ درخواستی ثبت نشده است.</p>`;
+            else {
+                html += `<div class="table-wrap"><table><thead><tr><th>تاریخ</th><th>ساعت</th></tr></thead><tbody>`;
+                requests.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+                requests.forEach(r => html += `<tr><td>${r.date}</td><td>${r.time}</td></tr>`);
+                html += `</tbody></table></div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function showMainPage(user) {
+            document.querySelectorAll('#app > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById('mainPage').classList.remove('hidden');
+            currentUser = user;
+            document.getElementById('displayName').textContent = (user.name + ' ' + user.family).trim() || user.username;
+            document.getElementById('displayRole').textContent = user.role;
+            document.getElementById('displayId').textContent = user.id;
+
+            const baleContainer = document.getElementById('baleBtnContainer');
+            if (user.role === 'پیمانکار') {
+                baleContainer.style.display = 'inline-block';
+                if (todayReportInterval) clearInterval(todayReportInterval);
+                todayReportInterval = setInterval(() => {
+                    const todayTab = document.getElementById('tab-todayReport');
+                    if (todayTab && todayTab.classList.contains('active')) {
+                        renderTabContent('todayReport');
+                    }
+                }, 3000);
+            } else {
+                baleContainer.style.display = 'none';
+                if (todayReportInterval) clearInterval(todayReportInterval);
+            }
+
+            if (clockInterval) clearInterval(clockInterval);
+            clockInterval = setInterval(updateHeaderDateTime, 1000);
+            updateHeaderDateTime();
+
+            renderTabs();
+            addActivityLog(user.id, 'ورود به سیستم', `نقش: ${user.role}`);
+        }
+
+        // ================================================================
+        //  رندر تب‌ها
+        // ================================================================
+
+        function renderTabs() {
+            const container = document.getElementById('tabsContainer');
+            const contentContainer = document.getElementById('tabContentContainer');
+            container.innerHTML = '';
+            contentContainer.innerHTML = '';
+
+            const role = currentUser.role;
+            let tabs = [];
+
+            if (role === 'مدیر') {
+                tabs = [
+                    { id: 'profile', label: '👤 پروفایل' },
+                    { id: 'dailyReport', label: '📊 گزارش روزانه' },
+                    { id: 'allReport', label: '📋 گزارش کلی' },
+                    { id: 'manageUsers', label: '👥 مدیریت کاربران' },
+                    { id: 'deleteUsers', label: '🗑️ حذف کاربران' },
+                    { id: 'importExcel', label: '📂 وارد کردن اکسل' },
+                    { id: 'reports', label: '📈 گزارش‌گیری' },
+                    { id: 'activityLog', label: '📋 ترکینگ فعالیت‌ها' }
+                ];
+            } else if (role === 'پیمانکار') {
+                tabs = [
+                    { id: 'profile', label: '👤 پروفایل' },
+                    { id: 'editRequest', label: '✏️ ویرایش درخواست' },
+                    { id: 'todayReport', label: '📊 گزارش امروز' },
+                    { id: 'allReport', label: '📋 گزارش کلی' }
+                ];
+            }
+
+            tabs.forEach((tab, idx) => {
+                const btn = document.createElement('button');
+                btn.textContent = tab.label;
+                btn.dataset.tab = tab.id;
+                if (idx === 0) btn.classList.add('active');
+                btn.addEventListener('click', () => switchTab(tab.id));
+                container.appendChild(btn);
+                const div = document.createElement('div');
+                div.id = 'tab-' + tab.id;
+                div.className = 'tab-content' + (idx === 0 ? ' active' : '');
+                contentContainer.appendChild(div);
+            });
+
+            if (tabs.length) renderTabContent(tabs[0].id);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('tab-' + tabId);
+            if (target) target.classList.add('active');
+            renderTabContent(tabId);
+        }
+
+        function renderTabContent(tabId) {
+            const container = document.getElementById('tab-' + tabId);
+            if (!container) return;
+            switch (tabId) {
+                case 'profile': renderProfile(container); break;
+                case 'dailyReport': renderDailyReport(container); break;
+                case 'allReport': renderAllReport(container); break;
+                case 'manageUsers': renderManageUsers(container); break;
+                case 'deleteUsers': renderDeleteUsers(container); break;
+                case 'importExcel': renderImportExcel(container); break;
+                case 'reports': renderReports(container); break;
+                case 'activityLog': renderActivityLog(container); break;
+                case 'editRequest': renderEditRequest(container); break;
+                case 'todayReport': renderTodayReport(container); break;
+                default: container.innerHTML = '<p>در حال آماده‌سازی...</p>';
+            }
+        }
+
+        // ===== توابع رندر تب‌ها (با تغییرات جزئی) =====
+        // (برای جلوگیری از طولانی شدن، توابع پروفایل، گزارش‌ها و ... با منطق مشابه قبل)
+        // در اینجا توابع اصلی به‌صورت خلاصه آورده شده‌اند
+
+        function renderProfile(container) {
+            const u = currentUser;
+            const genderTitle = u.sex === '0' ? 'خانم' : 'آقای';
+            const fullName = (u.name + ' ' + u.family).trim() || u.username;
+            const displayName = genderTitle ? `${genderTitle} ${fullName}` : fullName;
+            container.innerHTML = `
+                <h2>پروفایل کاربری</h2>
+                <div class="card">
+                    <div class="flex"><strong>ID:</strong> ${u.id}</div>
+                    <div class="flex"><strong>نام:</strong> ${displayName}</div>
+                    <div class="flex"><strong>نام کاربری:</strong> ${u.username || '---'}</div>
+                    <div class="flex"><strong>نقش:</strong> ${u.role}</div>
+                    <div class="flex"><strong>موقعیت:</strong> ${u.chartInfo || u.possition || '---'}</div>
+                    <div class="flex"><strong>۴ رقم کد ملی:</strong> ${String(u.nationalCode || '').slice(-4)}</div>
+                    <div class="flex"><strong>تعداد کل درخواست‌ها:</strong> ${getUserRequestCount(u.id)}</div>
+                </div>
+                <button class="btn-warning" onclick="changePassword()">🔑 تغییر رمز عبور</button>
+            `;
+        }
+
+        window.changePassword = function() {
+            const newPass = prompt('رمز عبور جدید (حداقل ۴ کاراکتر):');
+            if (newPass && newPass.trim().length >= 4) {
+                const res = updateUser(currentUser.id, { password: newPass.trim() });
+                if (res.success) { currentUser.password = newPass.trim(); showToast('رمز عبور تغییر کرد.', 'success'); }
+                else showToast(res.message, 'error');
+            } else if (newPass !== null) showToast('رمز باید حداقل ۴ کاراکتر باشد.', 'warning');
+        };
+
+        // ===== گزارش روزانه (مدیر) =====
+        function renderDailyReport(container) {
+            const today = getTodayShamsi();
+            const reqs = getDailyReport(today);
+            let html = `
+                <h2>📊 گزارش درخواست‌های امروز</h2>
+                <p>تاریخ: <strong>${today}</strong> | تعداد: <strong>${reqs.length}</strong> نفر</p>
+                <div class="search-box" style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+                    <input type="text" id="dailySearchInput" placeholder="جستجو بر اساس ۴ رقم آخر کد ملی..." maxlength="4" inputmode="numeric" style="flex:1; padding:8px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:15px;">
+                    <button class="btn-primary" onclick="searchDailyReport()">🔍 جستجو</button>
+                    <button class="btn-secondary" onclick="resetDailySearch()">🔄 نمایش همه</button>
+                </div>
+                <div id="dailyReportContent">
+            `;
+            if (reqs.length === 0) {
+                html += `<p>امروز هیچ درخواستی ثبت نشده است.</p>`;
+            } else {
+                html += `<div class="table-wrap"><table><thead><tr><th>ID</th><th>نام</th><th>نقش</th><th>ساعت</th><th>عملیات</th></tr></thead><tbody id="dailyTableBody">`;
+                reqs.sort((a, b) => a.time.localeCompare(b.time));
+                reqs.forEach(r => {
+                    const suffix = String(r.nationalCode || '').slice(-4);
+                    html += `<tr data-suffix="${suffix}" data-userid="${r.userId}" data-date="${r.date}">
+                        <td>${r.userId}</td>
+                        <td>${r.userName}</td>
+                        <td>${r.chartInfo || '---'}</td>
+                        <td>${r.time}</td>
+                        <td>
+                            <button class="btn-warning btn-sm" onclick="editDailyRequestBySuffix('${suffix}','${r.date}')">✏️</button>
+                            <button class="btn-danger btn-sm" onclick="delDailyRequestBySuffix('${suffix}','${r.date}')">🗑️</button>
+                        </td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+                html += `
+                    <div class="report-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+                        <button class="btn-secondary" onclick="exportDailyReportExcel()">📥 خروجی اکسل</button>
+                        <button class="btn-secondary" onclick="exportDailyReportJPG()">🖼️ خروجی عکس</button>
+                    </div>
+                `;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        window.searchDailyReport = function() {
+            const suffix = document.getElementById('dailySearchInput').value.trim();
+            if (!suffix || !/^\d{4}$/.test(suffix)) {
+                showToast('لطفاً ۴ رقم معتبر وارد کنید.', 'warning');
+                return;
+            }
+            const rows = document.querySelectorAll('#dailyTableBody tr');
+            let found = 0;
+            rows.forEach(row => {
+                const rowSuffix = row.dataset.suffix;
+                if (rowSuffix === suffix) {
+                    row.style.display = '';
+                    row.style.background = '#dbeafe';
+                    found++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            if (found === 0) showToast('کاربری با این کد ملی امروز درخواست ثبت نکرده است.', 'info');
+            else showToast(`${found} درخواست پیدا شد.`, 'success');
+        };
+
+        window.resetDailySearch = function() {
+            document.getElementById('dailySearchInput').value = '';
+            const rows = document.querySelectorAll('#dailyTableBody tr');
+            rows.forEach(row => { row.style.display = ''; row.style.background = ''; });
+        };
+
+        window.editDailyRequestBySuffix = function(suffix, date) {
+            const users = findUsersByNationalCodeSuffix(suffix);
+            if (users.length === 0) { showToast('کاربری با این کد ملی یافت نشد.', 'error'); return; }
+            if (users.length > 1) { showToast('چندین کاربر با این کد ملی وجود دارد!', 'error'); return; }
+            const newTime = prompt(`ساعت جدید را وارد کنید (HH:MM) برای ${users[0].name} ${users[0].family}:`);
+            if (!newTime) return;
+            if (!/^\d{2}:\d{2}$/.test(newTime)) { showToast('فرمت ساعت اشتباه است.', 'error'); return; }
+            const res = updateRequestBySuffix(suffix, date, newTime);
+            if (res.success) { showToast(res.message, 'success'); renderTabContent('dailyReport'); }
+            else showToast(res.message, 'error');
+        };
+
+        window.delDailyRequestBySuffix = function(suffix, date) {
+            const users = findUsersByNationalCodeSuffix(suffix);
+            if (users.length === 0) { showToast('کاربری با این کد ملی یافت نشد.', 'error'); return; }
+            if (users.length > 1) { showToast('چندین کاربر با این کد ملی وجود دارد!', 'error'); return; }
+            if (!confirm(`آیا از حذف درخواست ${users[0].name} ${users[0].family} اطمینان دارید؟`)) return;
+            const res = deleteRequestBySuffix(suffix, date);
+            if (res.success) { showToast(res.message, 'success'); renderTabContent('dailyReport'); }
+            else showToast(res.message, 'error');
+        };
+
+        window.exportDailyReportExcel = function() {
+            const today = getTodayShamsi();
+            const data = getDailyReport(today);
+            const columns = [
+                { key: 'userId', label: 'ID' },
+                { key: 'userName', label: 'نام' },
+                { key: 'chartInfo', label: 'نقش' },
+                { key: 'time', label: 'ساعت' }
+            ];
+            exportToExcel(data, `گزارش_روزانه_${today}`, columns);
+        };
+
+        window.exportDailyReportJPG = function() {
+            const content = document.getElementById('dailyReportContent');
+            if (!content) { showToast('محتوای گزارش یافت نشد.', 'error'); return; }
+            const table = content.querySelector('.table-wrap');
+            if (!table) { showToast('جدولی برای خروجی وجود ندارد.', 'warning'); return; }
+            table.style.overflow = 'visible';
+            exportToJPG(table, `گزارش_روزانه_${getTodayShamsi()}`);
+            setTimeout(() => { table.style.overflow = 'auto'; }, 1000);
+        };
+
+        // ===== گزارش کلی =====
+        function renderAllReport(container) {
+            const data = getAllReport();
+            const uniqueDays = new Set(currentDB.requests.map(r => r.date)).size;
+            const userMap = {};
+            data.forEach(r => {
+                if (!userMap[r.id]) {
+                    userMap[r.id] = { id: r.id, name: r.name, family: r.family, chartInfo: r.chartInfo, nationalCode: r.nationalCode, requestCount: 0 };
+                }
+                userMap[r.id].requestCount++;
+            });
+
+            let html = `
+                <h2>📋 گزارش کلی همه درخواست‌ها</h2>
+                <p>تعداد کل درخواست‌ها: <strong>${data.length}</strong></p>
+                <p>تعداد روزهایی که درخواست ثبت شده: <strong>${uniqueDays}</strong> روز</p>
+                <p>تعداد کارمندانی که حداقل یک بار درخواست ثبت کرده‌اند: <strong>${Object.keys(userMap).length}</strong> نفر</p>
+                <div id="allReportContent" style="overflow-x:auto;">
+            `;
+            if (data.length === 0) {
+                html += `<p>هیچ درخواستی ثبت نشده است.</p>`;
+            } else {
+                html += `<div class="table-wrap"><table><thead><tr><th>ID</th><th>نام</th><th>نام خانوادگی</th><th>نقش</th><th>۴ رقم کد ملی</th><th>تعداد درخواست‌ها</th><th>تاریخ</th><th>ساعت</th></tr></thead><tbody>`;
+                const sortedData = [...data].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+                sortedData.forEach(r => {
+                    const count = userMap[r.id] ? userMap[r.id].requestCount : 0;
+                    const suffix = String(r.nationalCode || '').slice(-4);
+                    html += `<tr>
+                        <td>${r.id}</td>
+                        <td>${r.name}</td>
+                        <td>${r.family}</td>
+                        <td>${r.chartInfo || '---'}</td>
+                        <td><strong>${suffix}</strong></td>
+                        <td><strong>${count}</strong></td>
+                        <td>${r.date}</td>
+                        <td>${r.time}</td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            }
+            html += `</div>`;
+
+            if (data.length > 0) {
+                html += `
+                    <div class="report-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+                        <button class="btn-secondary" onclick="exportAllReportExcel()">📥 خروجی اکسل</button>
+                        <button class="btn-secondary" onclick="exportAllReportJPG()">🖼️ خروجی عکس</button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        window.exportAllReportExcel = function() {
+            const data = getAllReport();
+            const columns = [
+                { key: 'id', label: 'ID' },
+                { key: 'name', label: 'نام' },
+                { key: 'family', label: 'نام خانوادگی' },
+                { key: 'chartInfo', label: 'نقش' },
+                { key: 'requestCount', label: 'تعداد درخواست‌ها' },
+                { key: 'date', label: 'تاریخ' },
+                { key: 'time', label: 'ساعت' }
+            ];
+            exportToExcel(data, `گزارش_کلی_همه_درخواست‌ها`, columns);
+        };
+
+        window.exportAllReportJPG = function() {
+            const container = document.getElementById('allReportContent');
+            if (!container) { showToast('محتوای گزارش یافت نشد.', 'error'); return; }
+            container.style.overflow = 'visible';
+            exportToJPG('allReportContent', `گزارش_کلی_همه_درخواست‌ها`);
+            setTimeout(() => { container.style.overflow = 'auto'; }, 1000);
+        };
+
+        // ===== مدیریت کاربران =====
+        function renderManageUsers(container) {
+            let html = `
+                <h2>👥 مدیریت کاربران</h2>
+                <div class="card card-success">
+                    <h3>➕ افزودن کاربر با ID دلخواه</h3>
+                    <div class="flex">
+                        <div style="flex:1; min-width:80px;"><label style="display:block; font-weight:600; font-size:13px;">ID</label><input type="text" id="newId" placeholder="مثلاً 105"></div>
+                        <div style="flex:1; min-width:120px;"><label style="display:block; font-weight:600; font-size:13px;">نام کاربری</label><input type="text" id="newUsername" placeholder="نام کاربری"></div>
+                        <div style="flex:1; min-width:100px;"><label style="display:block; font-weight:600; font-size:13px;">نام</label><input type="text" id="newName"></div>
+                        <div style="flex:1; min-width:100px;"><label style="display:block; font-weight:600; font-size:13px;">نام خانوادگی</label><input type="text" id="newFamily"></div>
+                        <div style="flex:1; min-width:130px;"><label style="display:block; font-weight:600; font-size:13px;">کد ملی</label><input type="text" id="newNational"></div>
+                        <div style="flex:0 0 130px;"><label style="display:block; font-weight:600; font-size:13px;">نقش</label>
+                            <select id="newRole"><option value="کارمند">کارمند</option><option value="پیمانکار">پیمانکار</option><option value="مدیر">مدیر</option></select>
+                        </div>
+                        <div style="flex:0 0 100px;"><label style="display:block; font-weight:600; font-size:13px;">جنسیت</label>
+                            <select id="newSex"><option value="1">آقا</option><option value="0">خانم</option></select>
+                        </div>
+                        <div style="flex:0 0 120px;"><label style="display:block; font-weight:600; font-size:13px;">رمز</label><input type="text" id="newPass" placeholder="خالی=نام کاربری"></div>
+                        <div><button id="addUserBtn" class="btn-success" style="margin-top:18px;">➕ افزودن</button></div>
+                    </div>
+                </div>
+                <div class="search-box" style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+                    <input type="text" id="userSearchInput" placeholder="جستجو بر اساس ID، نام، نام خانوادگی یا کد ملی..." onkeyup="filterUsers()" style="flex:1; padding:8px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:15px;">
+                    <button class="btn-secondary" onclick="filterUsers()">🔍 جستجو</button>
+                    <button class="btn-secondary" onclick="resetUserFilter()">🔄 نمایش همه</button>
+                </div>
+                <div id="usersTableContainer">
+            `;
+            html += buildUsersTable(currentDB.users);
+            html += `</div>`;
+            container.innerHTML = html;
+
+            document.getElementById('addUserBtn')?.addEventListener('click', function() {
+                const id = document.getElementById('newId').value.trim();
+                const username = document.getElementById('newUsername').value.trim();
+                const national = document.getElementById('newNational').value.trim();
+                if (!id) { showToast('ID الزامی است.', 'error'); return; }
+                if (!/^\d+$/.test(id)) { showToast('ID باید عدد باشد.', 'error'); return; }
+                if (findUserById(id)) { showToast(`ID ${id} تکراری است.`, 'error'); return; }
+                if (username && findUserByUsername(username)) { showToast(`نام کاربری ${username} تکراری است.`, 'error'); return; }
+                const pass = document.getElementById('newPass').value.trim() || username || id;
+                const res = addUserWithId({
+                    id, username: username || id,
+                    name: document.getElementById('newName').value.trim(),
+                    family: document.getElementById('newFamily').value.trim(),
+                    nationalCode: national,
+                    role: document.getElementById('newRole').value,
+                    password: pass,
+                    sex: document.getElementById('newSex').value,
+                    chartInfo: '', possition: ''
+                });
+                if (res.success) { showToast(res.message, 'success'); renderTabContent('manageUsers'); }
+                else showToast(res.message, 'error');
+            });
+        }
+
+        function buildUsersTable(users) {
+            let html = `<div class="table-wrap"><table><thead><tr><th>ID</th><th>نام کاربری</th><th>نام</th><th>خانوادگی</th><th>۴ رقم کد ملی</th><th>نقش</th><th>جنسیت</th><th>موقعیت</th><th>تعداد درخواست</th><th>عملیات</th></tr></thead><tbody>`;
+            users.forEach(u => {
+                const isSelf = u.id === currentUser.id;
+                const genderTitle = u.sex === '0' ? 'خانم' : 'آقای';
+                const suffix = String(u.nationalCode || '').slice(-4);
+                const count = getUserRequestCount(u.id);
+                html +=
+                    `<tr><td><strong>${u.id}</strong></td><td>${u.username || '---'}</td><td>${u.name || ''}</td><td>${u.family || ''}</td><td><strong>${suffix}</strong></td><td>${u.role}</td><td>${genderTitle}</td><td>${u.chartInfo || u.possition || '---'}</td><td>${count}</td>
+                    <td><button class="btn-warning btn-sm" onclick="editUser('${u.id}')">✏️</button>${!isSelf ? `<button class="btn-danger btn-sm" onclick="delUser('${u.id}')">🗑️</button>` : ''}</td></tr>`;
+            });
+            html += `</tbody></table></div>`;
+            return html;
+        }
+
+        window.filterUsers = function() {
+            const searchTerm = document.getElementById('userSearchInput').value.trim().toLowerCase();
+            if (!searchTerm) { renderTabContent('manageUsers'); return; }
+            const filtered = currentDB.users.filter(u =>
+                String(u.id).includes(searchTerm) ||
+                (u.name || '').toLowerCase().includes(searchTerm) ||
+                (u.family || '').toLowerCase().includes(searchTerm) ||
+                (u.nationalCode || '').includes(searchTerm) ||
+                (u.username || '').toLowerCase().includes(searchTerm)
+            );
+            const container = document.getElementById('usersTableContainer');
+            if (container) container.innerHTML = buildUsersTable(filtered);
+        };
+
+        window.resetUserFilter = function() {
+            document.getElementById('userSearchInput').value = '';
+            renderTabContent('manageUsers');
+        };
+
+        window.editUser = function(id) {
+            const u = findUserById(id);
+            if (!u) return;
+            const username = prompt('نام کاربری جدید:', u.username) || u.username;
+            const name = prompt('نام جدید:', u.name) || u.name;
+            const family = prompt('نام خانوادگی:', u.family) || u.family;
+            const national = prompt('کد ملی جدید:', u.nationalCode) || u.nationalCode;
+            const role = prompt('نقش (کارمند/پیمانکار/مدیر):', u.role) || u.role;
+            const pass = prompt('رمز جدید (خالی=تغییر نده):', '') || u.password;
+            const res = updateUser(id, { username, name, family, nationalCode: national, role, password: pass });
+            if (res.success) {
+                showToast(res.message, 'success');
+                if (currentUser.id === id) {
+                    currentUser = { ...currentUser, username, name, family, nationalCode: national, role, password: pass };
+                    document.getElementById('displayName').textContent = (currentUser.name + ' ' + currentUser.family).trim() || currentUser.username;
+                    document.getElementById('displayRole').textContent = currentUser.role;
+                }
+                renderTabContent('manageUsers');
+            } else showToast(res.message, 'error');
+        };
+
+        window.delUser = function(id) {
+            if (!confirm('حذف کاربر؟')) return;
+            const res = deleteUser(id);
+            if (res.success) { showToast(res.message, 'success'); renderTabContent('manageUsers'); }
+            else showToast(res.message, 'error');
+        };
+
+        // ===== حذف کاربران =====
+        function renderDeleteUsers(container) {
+            const employees = currentDB.users.filter(u => u.role === 'کارمند');
+            let html = `
+                <h2>🗑️ حذف کاربران</h2>
+                <div class="card card-danger">
+                    <div class="flex"><button id="deleteAllBtn" class="btn-danger">🗑️ حذف همه کارمندان</button>
+                    <button id="deleteSelectedBtn" class="btn-warning">☑️ حذف انتخاب‌شده‌ها</button></div>
+                </div>
+                <p style="margin:8px 0;">تعداد کارمندان: <strong>${employees.length}</strong></p>
+                <div class="table-wrap"><table><thead><tr><th><input type="checkbox" id="selectAllCheck" class="table-checkbox"></th><th>ID</th><th>نام</th><th>خانوادگی</th><th>۴ رقم کد ملی</th></tr></thead><tbody>`;
+            employees.forEach(u => {
+                const suffix = String(u.nationalCode || '').slice(-4);
+                html +=
+                    `<tr><td><input type="checkbox" class="emp-checkbox" value="${u.id}" data-id="${u.id}"></td><td>${u.id}</td><td>${u.name || ''}</td><td>${u.family || ''}</td><td><strong>${suffix}</strong></td></tr>`;
+            });
+            html += `</tbody></table></div>`;
+            container.innerHTML = html;
+
+            document.getElementById('selectAllCheck')?.addEventListener('change', function() {
+                document.querySelectorAll('.emp-checkbox').forEach(cb => cb.checked = this.checked);
+            });
+            document.getElementById('deleteAllBtn')?.addEventListener('click', function() {
+                if (!confirm('⚠️ آیا از حذف همه کارمندان اطمینان دارید؟')) return;
+                const res = deleteAllEmployees();
+                if (res.success) { showToast(res.message, 'success'); renderTabContent('deleteUsers'); renderTabContent('manageUsers'); }
+                else showToast(res.message, 'warning');
+            });
+            document.getElementById('deleteSelectedBtn')?.addEventListener('click', function() {
+                const checked = document.querySelectorAll('.emp-checkbox:checked');
+                if (checked.length === 0) { showToast('هیچ کاربری انتخاب نشده است.', 'warning'); return; }
+                if (!confirm(`آیا از حذف ${checked.length} کاربر انتخاب‌شده اطمینان دارید؟`)) return;
+                const ids = Array.from(checked).map(cb => cb.dataset.id);
+                let deleted = 0;
+                ids.forEach(id => { const res = deleteUser(id); if (res.success) deleted++; });
+                showToast(`${deleted} کاربر حذف شدند.`, 'success');
+                renderTabContent('deleteUsers');
+                renderTabContent('manageUsers');
+            });
+        }
+
+        // ===== وارد کردن اکسل =====
+        function renderImportExcel(container) {
+            container.innerHTML = `
+                <h2>📂 وارد کردن از اکسل</h2>
+                <p>ستون <strong>ID</strong> (اجباری) - برای کارمندان پذیرفته می‌شود.</p>
+                <p>نام کاربری کارمندان به‌صورت خودکار برابر با ID تنظیم می‌شود.</p>
+                <div class="upload-area" id="excelDropArea" style="border:2px dashed #cbd5e1; border-radius:14px; padding:40px 20px; text-align:center; cursor:pointer; transition:all 0.3s; background:#fafcff;">
+                    <label for="excelFile" style="display:block; cursor:pointer; font-size:16px; color:#1e293b;">📂 کلیک کنید یا فایل را بکشید</label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" style="display:none;">
+                    <div id="importStatus" style="margin-top:12px; font-size:14px; color:#64748b;"></div>
+                </div>
+                <div id="importResult"></div>
+            `;
+
+            const fileInput = document.getElementById('excelFile');
+            const status = document.getElementById('importStatus');
+
+            // تابع importUsersFromExcel قبلی با همان منطق
+            async function importUsersFromExcel(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = new Uint8Array(e.target.result);
+                            const workbook = XLSX.read(data, { type: 'array' });
+                            const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                            const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
+                            if (json.length === 0) reject(new Error('فایل خالی است.'));
+                            const headers = Object.keys(json[0]);
+                            const findCol = (keywords) => {
+                                for (let kw of keywords) {
+                                    const found = headers.find(h => h.toLowerCase().includes(kw.toLowerCase()));
+                                    if (found) return found;
+                                }
+                                return null;
+                            };
+                            const colId = findCol(['id', 'شناسه']);
+                            const colNational = findCol(['national code', 'nationalcode', 'national', 'کد ملی']);
+                            const colName = findCol(['name', 'نام']);
+                            const colFamily = findCol(['family', 'نام خانوادگی', 'fname']);
+                            const colSex = findCol(['sex', 'جنسیت']);
+                            const colChart = findCol(['chartinfo', 'chart', 'موقعیت']);
+                            const colPoss = findCol(['possition', 'position', 'سمت']);
+                            if (!colId) reject(new Error('ستون ID پیدا نشد.'));
+                            let added = 0, skipped = 0, errors = [];
+                            json.forEach((row, index) => {
+                                const id = String(row[colId] || '').trim();
+                                if (!id) { skipped++; return; }
+                                if (findUserById(id)) { skipped++; return; }
+                                const national = colNational ? String(row[colNational] || '').trim() : '';
+                                const name = colName ? String(row[colName] || '').trim() : '';
+                                const family = colFamily ? String(row[colFamily] || '').trim() : '';
+                                const sex = colSex ? String(row[colSex] || '').trim() : '';
+                                const chartInfo = colChart ? String(row[colChart] || '').trim() : '';
+                                const possition = colPoss ? String(row[colPoss] || '').trim() : '';
+                                const username = id;
+                                if (findUserByUsername(username)) {
+                                    const newUsername = `${username}_${Math.floor(Math.random() * 1000)}`;
+                                    const result = addUserWithId({
+                                        id, username: newUsername, name, family, sex,
+                                        nationalCode: national, chartInfo, possition,
+                                        role: 'کارمند', password: id
+                                    });
+                                    if (result.success) added++;
+                                    else errors.push(`ردیف ${index+2}: ${result.message}`);
+                                } else {
+                                    const result = addUserWithId({
+                                        id, username, name, family, sex,
+                                        nationalCode: national, chartInfo, possition,
+                                        role: 'کارمند', password: id
+                                    });
+                                    if (result.success) added++;
+                                    else errors.push(`ردیف ${index+2}: ${result.message}`);
+                                }
+                            });
+                            resolve({ added, skipped, total: json.length, errors });
+                        } catch (err) { reject(err); }
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            async function handleFile(file) {
+                status.textContent = '⏳ در حال پردازش...';
+                document.getElementById('importResult').innerHTML = '';
+                try {
+                    const res = await importUsersFromExcel(file);
+                    let msg = `✅ ${res.added} کاربر جدید اضافه شد. (${res.skipped} تکراری/ناقص رد شد)`;
+                    if (res.errors && res.errors.length) msg += `<br>⚠️ خطاها: ${res.errors.join('؛ ')}`;
+                    status.innerHTML = msg;
+                    if (res.added > 0) { showToast(`${res.added} کاربر با موفقیت وارد شدند.`, 'success'); renderTabContent('manageUsers'); }
+                    else showToast('هیچ کاربر جدیدی اضافه نشد.', 'warning');
+                } catch (err) {
+                    status.textContent = '❌ خطا: ' + err.message;
+                    showToast('خطا: ' + err.message, 'error');
+                }
+            }
+
+            fileInput.addEventListener('change', function() { if (this.files.length) handleFile(this.files[0]); });
+            const area = document.getElementById('excelDropArea');
+            area.addEventListener('dragover', e => { e.preventDefault(); area.style.borderColor = '#3b82f6'; });
+            area.addEventListener('dragleave', e => { area.style.borderColor = '#cbd5e1'; });
+            area.addEventListener('drop', e => {
+                e.preventDefault();
+                area.style.borderColor = '#cbd5e1';
+                const files = e.dataTransfer.files;
+                if (files.length) { fileInput.files = files; fileInput.dispatchEvent(new Event('change')); }
+            });
+        }
+
+        // ===== گزارش‌گیری (مدیر) =====
+        function renderReports(container) {
+            container.innerHTML = `
+                <h2>📈 گزارش‌گیری</h2>
+                <div class="flex">
+                    <div style="flex:1; min-width:120px;"><label style="display:block; font-weight:600; font-size:13px;">نوع</label>
+                        <select id="repType" style="width:100%;">
+                            <option value="daily">روزانه</option>
+                            <option value="weekly">هفتگی</option>
+                            <option value="monthly">ماهانه</option>
+                            <option value="yearly">سالانه</option>
+                        </select>
+                    </div>
+                    <div style="flex:1; min-width:150px;" id="repDateField"><label style="display:block; font-weight:600; font-size:13px;">تاریخ</label><input type="date" id="repDate" value="${new Date().toISOString().split('T')[0]}"></div>
+                    <div style="flex:1; min-width:100px; display:none;" id="repWeekField"><label style="display:block; font-weight:600; font-size:13px;">هفته</label><input type="number" id="repWeek" value="1" min="1" max="53"></div>
+                    <div style="flex:1; min-width:100px; display:none;" id="repMonthField"><label style="display:block; font-weight:600; font-size:13px;">ماه</label><input type="number" id="repMonth" value="${new Date().getMonth()+1}" min="1" max="12"></div>
+                    <div style="flex:1; min-width:100px; display:none;" id="repYearField"><label style="display:block; font-weight:600; font-size:13px;">سال</label><input type="number" id="repYear" value="${new Date().getFullYear()}"></div>
+                    <div><button id="genRepBtn" class="btn-primary" style="margin-top:18px;">📊 نمایش</button></div>
+                </div>
+                <div id="repResult"></div>
+            `;
+
+            const typeSel = document.getElementById('repType');
+            const dateF = document.getElementById('repDateField');
+            const weekF = document.getElementById('repWeekField');
+            const monthF = document.getElementById('repMonthField');
+            const yearF = document.getElementById('repYearField');
+
+            function updateFields() {
+                const t = typeSel.value;
+                dateF.style.display = t === 'daily' ? 'block' : 'none';
+                weekF.style.display = t === 'weekly' ? 'block' : 'none';
+                monthF.style.display = t === 'monthly' ? 'block' : 'none';
+                yearF.style.display = (t === 'weekly' || t === 'monthly' || t === 'yearly') ? 'block' : 'none';
+            }
+            typeSel.addEventListener('change', updateFields);
+            updateFields();
+
+            document.getElementById('genRepBtn').addEventListener('click', function() {
+                const type = typeSel.value;
+                let data = [], title = '';
+                try {
+                    switch (type) {
+                        case 'daily': {
+                            const d = document.getElementById('repDate').value;
+                            if (!d) throw 'تاریخ را انتخاب کنید.';
+                            const reqs = getRequestsByDate(d);
+                            data = reqs.map(r => {
+                                const u = findUserById(r.userId);
+                                return { ...r, userName: u ? (u.name + ' ' + u.family).trim() || u.username : 'نامشخص', chartInfo: u ? u.chartInfo || '' : '' };
+                            });
+                            title = `گزارش روزانه - ${d}`;
+                            break;
+                        }
+                        case 'weekly': {
+                            const y = parseInt(document.getElementById('repYear').value);
+                            const w = parseInt(document.getElementById('repWeek').value);
+                            if (!y || !w) throw 'سال و هفته را وارد کنید.';
+                            const first = new Date(y, 0, 1);
+                            const offset = (first.getDay() + 6) % 7;
+                            const start = new Date(y, 0, 1 + (w - 1) * 7 - offset);
+                            const end = new Date(start);
+                            end.setDate(end.getDate() + 6);
+                            const startStr = start.toISOString().split('T')[0];
+                            const endStr = end.toISOString().split('T')[0];
+                            const reqs = currentDB.requests.filter(r => r.date >= startStr && r.date <= endStr);
+                            data = reqs.map(r => {
+                                const u = findUserById(r.userId);
+                                return { ...r, userName: u ? (u.name + ' ' + u.family).trim() || u.username : 'نامشخص', chartInfo: u ? u.chartInfo || '' : '' };
+                            });
+                            title = `گزارش هفتگی - هفته ${w} سال ${y}`;
+                            break;
+                        }
+                        case 'monthly': {
+                            const y = parseInt(document.getElementById('repYear').value);
+                            const m = parseInt(document.getElementById('repMonth').value);
+                            if (!y || !m) throw 'سال و ماه را وارد کنید.';
+                            const ms = String(m).padStart(2, '0');
+                            const start = `${y}-${ms}-01`;
+                            const last = new Date(y, m, 0).getDate();
+                            const end = `${y}-${ms}-${String(last).padStart(2, '0')}`;
+                            const reqs = currentDB.requests.filter(r => r.date >= start && r.date <= end);
+                            data = reqs.map(r => {
+                                const u = findUserById(r.userId);
+                                return { ...r, userName: u ? (u.name + ' ' + u.family).trim() || u.username : 'نامشخص', chartInfo: u ? u.chartInfo || '' : '' };
+                            });
+                            title = `گزارش ماهانه - ${y}/${ms}`;
+                            break;
+                        }
+                        case 'yearly': {
+                            const y = parseInt(document.getElementById('repYear').value);
+                            if (!y) throw 'سال را وارد کنید.';
+                            const reqs = currentDB.requests.filter(r => r.date.startsWith(String(y)));
+                            data = reqs.map(r => {
+                                const u = findUserById(r.userId);
+                                return { ...r, userName: u ? (u.name + ' ' + u.family).trim() || u.username : 'نامشخص', chartInfo: u ? u.chartInfo || '' : '' };
+                            });
+                            title = `گزارش سالانه - ${y}`;
+                            break;
+                        }
+                    }
+                } catch (e) { showToast(e, 'error'); return; }
+
+                const div = document.getElementById('repResult');
+                if (!data.length) { div.innerHTML = '<p>هیچ داده‌ای یافت نشد.</p>'; return; }
+                let html = `<h3>${title}</h3><p>تعداد: <strong>${data.length}</strong></p>`;
+                html += `<div id="reportContent"><div class="table-wrap"><table><thead><tr><th>ID</th><th>نام</th><th>نقش</th><th>تاریخ</th><th>ساعت</th></tr></thead><tbody>`;
+                data.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+                data.forEach(r => html += `<tr><td>${r.userId}</td><td>${r.userName}</td><td>${r.chartInfo}</td><td>${r.date}</td><td>${r.time}</td></tr>`);
+                html += `</tbody></table></div></div>`;
+                html += `<div class="report-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+                    <button class="btn-secondary" onclick="exportReportExcel(${JSON.stringify(data).replace(/"/g,'&quot;')}, '${title}')">📥 خروجی اکسل</button>
+                    <button class="btn-secondary" onclick="exportReportJPG('${title}')">🖼️ خروجی عکس</button>
+                </div>`;
+                div.innerHTML = html;
+            });
+        }
+
+        window.exportReportExcel = function(data, title) {
+            const columns = [
+                { key: 'userId', label: 'ID' },
+                { key: 'userName', label: 'نام' },
+                { key: 'chartInfo', label: 'نقش' },
+                { key: 'date', label: 'تاریخ' },
+                { key: 'time', label: 'ساعت' }
+            ];
+            exportToExcel(data, title, columns);
+        };
+
+        window.exportReportJPG = function(title) {
+            const content = document.getElementById('reportContent');
+            if (!content) { showToast('محتوای گزارش یافت نشد.', 'error'); return; }
+            content.style.overflow = 'visible';
+            exportToJPG('reportContent', title);
+            setTimeout(() => { content.style.overflow = 'auto'; }, 1000);
+        };
+
+        // ===== ترکینگ فعالیت‌ها =====
+        function renderActivityLog(container) {
+            const logs = currentDB.activityLog || [];
+            let html = `
+                <h2>📋 ترکینگ فعالیت‌ها</h2>
+                <div class="flex" style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+                    <div style="flex:1; min-width:150px;"><label style="display:block; font-weight:600; font-size:13px;">فیلتر تاریخ</label><input type="date" id="logFilterDate" style="width:100%; padding:8px; border:1.5px solid #e2e8f0; border-radius:10px;"></div>
+                    <div style="flex:1; min-width:150px;"><label style="display:block; font-weight:600; font-size:13px;">فیلتر کاربر</label>
+                        <select id="logFilterUser" style="width:100%; padding:8px; border:1.5px solid #e2e8f0; border-radius:10px;"><option value="">همه کاربران</option>${currentDB.users.map(u => `<option value="${u.id}">${u.name || ''} ${u.family || ''} (ID:${u.id})</option>`).join('')}</select>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:18px;"><button id="applyLogFilter" class="btn-primary">🔍 اعمال</button><button id="resetLogFilter" class="btn-secondary">🔄 بازنشانی</button></div>
+                </div>
+                <div id="logResult">
+            `;
+            if (logs.length === 0) html += `<p>هیچ فعالیتی ثبت نشده است.</p>`;
+            else {
+                html += `<div class="table-wrap"><table><thead><tr><th>زمان</th><th>کاربر</th><th>نقش</th><th>فعالیت</th><th>جزئیات</th></tr></thead><tbody>`;
+                logs.slice(-200).reverse().forEach(l => html += `<tr><td>${l.date} ${l.time}</td><td>${l.userName}</td><td>${l.role}</td><td>${l.action}</td><td>${l.details || ''}</td></tr>`);
+                html += `</tbody></table></div><p style="font-size:13px; color:#94a3b8;">نمایش ${Math.min(logs.length, 200)} مورد از ${logs.length} کل فعالیت‌ها</p>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+
+            document.getElementById('applyLogFilter')?.addEventListener('click', function() {
+                const date = document.getElementById('logFilterDate').value;
+                const userId = document.getElementById('logFilterUser').value;
+                let filtered = logs;
+                if (date) filtered = filtered.filter(l => l.date === date);
+                if (userId) filtered = filtered.filter(l => l.userId === userId);
+                const div = document.getElementById('logResult');
+                if (filtered.length === 0) { div.innerHTML = '<p>هیچ فعالیتی با این فیلترها یافت نشد.</p>'; return; }
+                let html2 = `<div class="table-wrap"><table><thead><tr><th>زمان</th><th>کاربر</th><th>نقش</th><th>فعالیت</th><th>جزئیات</th></tr></thead><tbody>`;
+                filtered.slice(-200).reverse().forEach(l => html2 += `<tr><td>${l.date} ${l.time}</td><td>${l.userName}</td><td>${l.role}</td><td>${l.action}</td><td>${l.details || ''}</td></tr>`);
+                html2 += `</tbody></table></div><p style="font-size:13px; color:#94a3b8;">نمایش ${Math.min(filtered.length, 200)} مورد از ${filtered.length} کل فعالیت‌ها</p>`;
+                div.innerHTML = html2;
+            });
+            document.getElementById('resetLogFilter')?.addEventListener('click', function() {
+                document.getElementById('logFilterDate').value = '';
+                document.getElementById('logFilterUser').value = '';
+                renderActivityLog(document.getElementById('tab-activityLog'));
+            });
+        }
+
+        // ===== ویرایش درخواست (پیمانکار) =====
+        function renderEditRequest(container) {
+            const today = getTodayShamsi();
+            const reqs = getRequestsByDate(today);
+            let html = `<h2>✏️ ویرایش درخواست‌های امروز</h2><p>تاریخ: <strong>${today}</strong></p>
+                        <p style="font-size:13px; color:#64748b;">برای ویرایش، ۴ رقم آخر کد ملی کارمند را وارد کنید:</p>
+                        <div class="flex" style="display:flex; gap:10px; align-items:center; margin:10px 0;">
+                            <input type="text" id="editSuffixInput" placeholder="۴ رقم آخر کد ملی" maxlength="4" style="flex:1; padding:8px 14px; border:1.5px solid #e2e8f0; border-radius:10px; text-align:center;">
+                            <button class="btn-primary" onclick="searchEditRequest()">🔍 جستجو</button>
+                            <button class="btn-secondary" onclick="resetEditRequest()">🔄 نمایش همه</button>
+                        </div>
+                        <div id="editRequestList">`;
+            if (!reqs.length) {
+                html += `<p>امروز هیچ درخواستی نیست.</p>`;
+            } else {
+                html += `<div class="table-wrap"><table><thead><tr><th>ID</th><th>نام</th><th>۴ رقم کد ملی</th><th>ساعت</th><th>ID جدید</th><th>عملیات</th></tr></thead><tbody>`;
+                reqs.forEach(r => {
+                    const u = findUserById(r.userId);
+                    const name = u ? (u.name + ' ' + u.family).trim() || u.username : 'نامشخص';
+                    const suffix = u ? String(u.nationalCode || '').slice(-4) : '----';
+                    html += `<tr id="req_${r.userId}" data-suffix="${suffix}" data-userid="${r.userId}" data-date="${r.date}">
+                        <td><strong>${r.userId}</strong></td>
+                        <td>${name}</td>
+                        <td><strong>${suffix}</strong></td>
+                        <td>${r.time}</td>
+                        <td><input type="text" id="newId_${r.userId}" placeholder="ID جدید" maxlength="3" style="width:80px; text-align:center;"></td>
+                        <td>
+                            <button class="btn-warning btn-sm" onclick="editReqIdBySuffix('${suffix}','${r.date}')">✏️ ویرایش</button>
+                            <button class="btn-danger btn-sm" onclick="delReqBySuffix('${suffix}','${r.date}')">🗑️ حذف</button>
+                        </td>
+                    </tr>`;
+                });
+                html += `</tbody></table></div>`;
+            }
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        window.searchEditRequest = function() {
+            const suffix = document.getElementById('editSuffixInput').value.trim();
+            if (!suffix || !/^\d{4}$/.test(suffix)) {
+                showToast('لطفاً ۴ رقم معتبر وارد کنید.', 'warning');
+                return;
+            }
+            const rows = document.querySelectorAll('#editRequestList tbody tr');
+            let found = 0;
+            rows.forEach(row => {
+                const rowSuffix = row.dataset.suffix;
+                if (rowSuffix === suffix) {
+                    row.style.display = '';
+                    row.style.background = '#dbeafe';
+                    found++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            if (found === 0) showToast('کاربری با این کد ملی امروز درخواست ثبت نکرده است.', 'info');
+            else showToast(`${found} درخواست پیدا شد.`, 'success');
+        };
+
+        window.resetEditRequest = function() {
+            document.getElementById('editSuffixInput').value = '';
+            const rows = document.querySelectorAll('#editRequestList tbody tr');
+            rows.forEach(row => { row.style.display = ''; row.style.background = ''; });
+        };
+
+        window.editReqIdBySuffix = function(suffix, date) {
+            const users = findUsersByNationalCodeSuffix(suffix);
+            if (users.length === 0) { showToast('کاربری با این کد ملی یافت نشد.', 'error'); return; }
+            if (users.length > 1) { showToast('چندین کاربر با این کد ملی وجود دارد!', 'error'); return; }
+            const user = users[0];
+            const req = currentDB.requests.find(r => r.userId === String(user.id) && r.date === date);
+            if (!req) { showToast('درخواستی برای این کاربر در تاریخ مورد نظر یافت نشد.', 'error'); return; }
+            const newId = prompt(`ID جدید را وارد کنید برای ${user.name} ${user.family}:`);
+            if (!newId) return;
+            if (!/^\d+$/.test(newId)) { showToast('ID باید عدد باشد.', 'error'); return; }
+            if (String(user.id) === newId) { showToast('ID جدید با قبلی یکی است.', 'warning'); return; }
+            const res = updateRequestUserId(user.id, newId, date);
+            if (res.success) { showToast(res.message, 'success'); renderTabContent('editRequest'); }
+            else showToast(res.message, 'error');
+        };
+
+        window.delReqBySuffix = function(suffix, date) {
+            const users = findUsersByNationalCodeSuffix(suffix);
+            if (users.length === 0) { showToast('کاربری با این کد ملی یافت نشد.', 'error'); return; }
+            if (users.length > 1) { showToast('چندین کاربر با این کد ملی وجود دارد!', 'error'); return; }
+            if (!confirm(`آیا از حذف درخواست ${users[0].name} ${users[0].family} اطمینان دارید؟`)) return;
+            const res = deleteRequestBySuffix(suffix, date);
+            if (res.success) { showToast(res.message, 'success'); renderTabContent('editRequest'); }
+            else showToast(res.message, 'error');
+        };
+
+        // ===== گزارش امروز (پیمانکار) =====
+        function renderTodayReport(container) {
+            const today = getTodayShamsi();
+            const reqs = getRequestsByDate(today);
+            let html = `<h2>📊 گزارش امروز</h2><p>تاریخ: <strong>${today}</strong> | تعداد: <strong>${reqs.length}</strong> نفر</p>`;
+            if (!reqs.length) {
+                html += `<p>امروز هیچ درخواستی ثبت نشده است.</p>`;
+            } else {
+                html += `<div id="todayReportContent"><div class="table-wrap"><table><thead><tr><th>ID</th><th>نام</th><th>نام خانوادگی</th><th>نقش</th><th>ساعت</th></tr></thead><tbody>`;
+                reqs.sort((a, b) => a.time.localeCompare(b.time));
+                reqs.forEach(r => {
+                    const u = findUserById(r.userId);
+                    html += `<tr><td>${r.userId}</td><td>${u ? u.name || '' : ''}</td><td>${u ? u.family || '' : ''}</td><td>${u ? u.chartInfo || u.possition || '' : ''}</td><td>${r.time}</td></tr>`;
+                });
+                html += `</tbody></table></div></div>`;
+                html += `
+                    <div class="report-actions" style="display:flex; gap:10px; flex-wrap:wrap; margin:10px 0;">
+                        <button class="btn-secondary" onclick="exportTodayReportExcel()">📥 خروجی اکسل</button>
+                        <button class="btn-secondary" onclick="exportTodayReportJPG()">🖼️ خروجی عکس</button>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        window.exportTodayReportExcel = function() {
+            const today = getTodayShamsi();
+            const reqs = getRequestsByDate(today);
+            if (!reqs.length) { showToast('هیچ درخواستی برای امروز وجود ندارد.', 'warning'); return; }
+            const data = reqs.map(r => {
+                const u = findUserById(r.userId);
+                return {
+                    id: r.userId,
+                    name: u ? u.name || '' : '',
+                    family: u ? u.family || '' : '',
+                    chartInfo: u ? u.chartInfo || u.possition || '' : '',
+                    date: r.date,
+                    time: r.time
+                };
+            });
+            const columns = [
+                { key: 'id', label: 'ID' },
+                { key: 'name', label: 'نام' },
+                { key: 'family', label: 'نام خانوادگی' },
+                { key: 'chartInfo', label: 'نقش' },
+                { key: 'date', label: 'تاریخ' },
+                { key: 'time', label: 'ساعت' }
+            ];
+            exportToExcel(data, `گزارش_امروز_${today}`, columns);
+        };
+
+        window.exportTodayReportJPG = function() {
+            const content = document.getElementById('todayReportContent');
+            if (!content) { showToast('محتوای گزارش یافت نشد.', 'error'); return; }
+            content.style.overflow = 'visible';
+            exportToJPG('todayReportContent', `گزارش_امروز_${getTodayShamsi()}`);
+            setTimeout(() => { content.style.overflow = 'auto'; }, 1000);
+        };
+
+        // ================================================================
+        //  صفحه کارمند
+        // ================================================================
+
+        let currentEmployee = null;
+
+        function searchAndRegister() {
+            const suffix = document.getElementById('empCodeInput').value.trim();
+            const panel = document.getElementById('empInfoPanel');
+            const content = document.getElementById('empInfoContent');
+            const lastReq = document.getElementById('empLastRequest');
+
+            panel.classList.add('hidden');
+            showEmpMessage('', '');
+
+            if (!suffix || !/^\d{4}$/.test(suffix)) {
+                showEmpMessage('❌ لطفاً ۴ رقم آخر کد ملی را وارد کنید.', 'error');
+                return;
+            }
+
+            const user = findUserByNationalCodeSuffix(suffix);
+            if (!user || user.role !== 'کارمند') {
+                showEmpMessage('❌ کد وارد شده در سیستم وجود ندارد یا کارمند نیست.', 'error');
+                return;
+            }
+
+            currentEmployee = user;
+
+            if (hasRequestToday(user.id)) {
+                const req = currentDB.requests.find(r => r.userId === String(user.id) && r.date === getTodayShamsi());
+                showEmpMessage(`⚠️ کاربر ${user.name} ${user.family} امروز قبلاً ثبت کرده است. ساعت: ${req?.time || '---'}`, 'warning');
+                document.getElementById('empCodeInput').value = '';
+                document.getElementById('empCodeInput').focus();
+                return;
+            }
+
+            const res = addRequest(user.id);
+            if (res.success) {
+                const genderTitle = user.sex === '0' ? 'خانم' : 'آقای';
+                showEmpMessage(`✅ درخواست ناهار برای ${genderTitle} ${user.name} ${user.family} با موفقیت ثبت شد. نوش جان! 🍱`, 'success');
+                showToast('درخواست ناهار ثبت شد. نوش جان! 🍱', 'success');
+                document.getElementById('empCodeInput').value = '';
+                document.getElementById('empCodeInput').focus();
+                panel.classList.add('hidden');
+                currentEmployee = null;
+            } else {
+                showEmpMessage('❌ ' + res.message, 'error');
+            }
+        }
+
+        function goToEmployeeProfile() {
+            if (!currentEmployee) { showEmpMessage('❌ ابتدا یک کارمند را جستجو کنید.', 'error'); return; }
+            showEmployeeProfile(currentEmployee);
+        }
+
+        function showEmpMessage(msg, type = 'info') {
+            const el = document.getElementById('empMessage');
+            if (!el) return;
+            el.textContent = msg;
+            el.className = '';
+            el.style.display = 'block';
+            el.style.background = type === 'success' ? '#dcfce7' : type === 'error' ? '#fee2e2' : type === 'warning' ? '#fef3c7' : '#dbeafe';
+            el.style.color = type === 'success' ? '#166534' : type === 'error' ? '#991b1b' : type === 'warning' ? '#92400e' : '#1e40af';
+            setTimeout(() => el.style.display = 'none', 4000);
+        }
+
+        // ================================================================
+        //  راه‌اندازی اولیه
+        // ================================================================
+
+        document.addEventListener('DOMContentLoaded', async function() {
+
+            // درخواست مجوز اعلان
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+
+            // بارگذاری داده از JSONBin
+            await loadDataFromCloud();
+
+            // اگر کاربر پیش‌فرض وجود نداشت، اضافه کن
+            if (!findUserById('999')) {
+                currentDB.users.push({
+                    id: '999',
+                    username: 'admin',
+                    name: 'مدیر',
+                    family: 'سیستم',
+                    role: 'مدیر',
+                    password: 'admin',
+                    sex: '1',
+                    chartInfo: 'مدیرکل',
+                    possition: 'مدیر',
+                    nationalCode: '1234567890'
+                });
+                saveDataToCloud();
+            }
+            if (!findUserById('500')) {
+                currentDB.users.push({
+                    id: '500',
+                    username: 'manage',
+                    name: 'پیمانکار',
+                    family: 'نمونه',
+                    role: 'پیمانکار',
+                    password: '1234',
+                    sex: '1',
+                    chartInfo: 'پیمانکار',
+                    possition: 'پیمانکار',
+                    nationalCode: '9876543210'
+                });
+                saveDataToCloud();
+            }
+
+            // رویدادهای دکمه‌ها
+            document.getElementById('goManagerBtn').addEventListener('click', () => showLoginPage('مدیر'));
+            document.getElementById('goContractorBtn').addEventListener('click', () => showLoginPage('پیمانکار'));
+            document.getElementById('goEmployeeBtn').addEventListener('click', showEmployeePage);
+
+            document.getElementById('loginBtn').addEventListener('click', function() {
+                const username = document.getElementById('loginUser').value.trim();
+                const pass = document.getElementById('loginPass').value.trim();
+                const role = document.getElementById('loginPage').dataset.role || '';
+                if (!username || !pass) { showLoginMessage('نام کاربری و رمز را وارد کنید.', 'error'); return; }
+                const user = findUserByUsername(username);
+                if (!user) { showLoginMessage('کاربر یافت نشد.', 'error'); return; }
+                if (user.password !== pass) { showLoginMessage('رمز اشتباه است.', 'error'); return; }
+                if (user.role !== role) { showLoginMessage(`نقش شما ${user.role} است، نه ${role}.`, 'error'); return; }
+                showMainPage(user);
+            });
+
+            document.getElementById('loginPass').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
+            document.getElementById('loginUser').addEventListener('keypress', e => { if (e.key === 'Enter') document.getElementById('loginBtn').click(); });
+
+            document.getElementById('logoutBtn').addEventListener('click', function() {
+                if (currentUser) addActivityLog(currentUser.id, 'خروج از سیستم', '');
+                if (clockInterval) clearInterval(clockInterval);
+                goHome();
+            });
+
+            document.getElementById('empConfirmBtn').addEventListener('click', searchAndRegister);
+            document.getElementById('empProfileBtn').addEventListener('click', goToEmployeeProfile);
+            document.getElementById('empCodeInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') searchAndRegister();
+            });
+
+            function showLoginMessage(msg, type = 'error') {
+                const el = document.getElementById('loginMessage');
+                if (!el) return;
+                el.textContent = msg;
+                el.className = '';
+                el.style.display = 'block';
+                el.style.background = type === 'success' ? '#dcfce7' : '#fee2e2';
+                el.style.color = type === 'success' ? '#166534' : '#991b1b';
+            }
+
+            updateHomeDateTime();
+            setInterval(updateHomeDateTime, 60000);
+        });
+    </script>
+</body>
+</html>
